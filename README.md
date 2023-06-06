@@ -37,3 +37,19 @@ Add to home component
 Add ts
 Add html
 Add css
+
+7. Tags Bar
+
+Create Tag model
+Add sample tags to data.ts
+Food service
+Add get all tags method
+Add get all foods by tag method
+Add tags route
+Show tag result in Home component
+Generate Tags component
+Add to home component
+Add ts
+Add html
+Add css
+

@@ -25,4 +25,7 @@ getAllProductsByTag(tag:string):Product[]{
   this.getAll().filter(Product =>Product.tags?.includes(tag));
 
 }
+getProductById(productId:string):Product{
+  return this.getAll().find(product => product.id == productId) ?? new Product();
+}
 }
