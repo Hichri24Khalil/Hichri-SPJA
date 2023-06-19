@@ -18,7 +18,9 @@ export class HeaderComponent implements OnInit {
     })
 
   userService.userObservable.subscribe((newUser)=>{
-   this.user=newUser;
+   this.user=newUser;{
+
+   }
   })
    }
 

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { User } from '../Shared/models/User';
-import { IUserLogin } from '../Shared/interfaces/iUserLogin';
+import { IUserLogin } from '../Shared/interfaces/IUserLogin';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { USER_LOGIN_URL } from '../Shared/constants/urls';
 import { ToastrService } from 'ngx-toastr';
