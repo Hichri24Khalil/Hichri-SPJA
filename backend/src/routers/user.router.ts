@@ -2,8 +2,9 @@ import { Router } from "express";
 import { sample_users } from "../data";
 import jwt from 'jsonwebtoken';
 import asyncHandler from 'express-async-handler';
-import { UserModel } from "../models/user.model";
-
+import { User, UserModel } from "../models/user.model";
+import { HTTP_BAD_REQUEST } from "../constants/http_status";
+import bcrypt from 'bcryptjs';
 
 const router = Router();
   
@@ -24,17 +25,45 @@ router.get("/seed", asyncHandler(
  router.post("/login", asyncHandler(
   async (req, res) => {
     const { email, password } = req.body;
-    const user = await UserModel.findOne({ email,password });
+    const user = await UserModel.findOne({ email });
 
-    if (user) {
-      res.send(generateTokenResponse(user));
-    } 
+    if (user && (await bcrypt.compare (password,user.password))) {
+      const token = generateTokenResponse(user);
+     // user.token = token;   
+       // res.send(user);
+       res.send({ user, token }); 
+    
+      } 
     else {
-      const BAD_REQUEST=400
-      res.status(BAD_REQUEST).send("Username or password is not valid");
+     
+      res.status(HTTP_BAD_REQUEST).send("Username or password is not valid");
     }
   }
 ));
+
+router.post('/register', asyncHandler(
+  async (req, res) => {
+    const {name, email, password, address} = req.body;
+    const user = await UserModel.findOne({email});
+    if(user){
+      res.status(HTTP_BAD_REQUEST)
+      .send('User is already exist, please login!');
+      return;
+    }
+    const encryptedPassword = await bcrypt.hash(password, 10);
+    const newUser:User = {
+      id:'',
+      name,
+      email: email.toLowerCase(),
+      password: encryptedPassword,
+      address,
+      isAdmin: false
+    }
+
+    const dbUser = await UserModel.create(newUser);
+    res.send(generateTokenResponse(dbUser));
+  }
+))
 
 
 const generateTokenResponse = (user: any) => {
@@ -49,8 +78,7 @@ const generateTokenResponse = (user: any) => {
     }
   );
 
-  user.token = token;
-  return user;
+  return token;
 };
 
 export default router ;

@@ -38,6 +38,8 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
+
+
             "outputPath": "dist/frontend",
             "index": "src/index.html",
             "main": "src/main.ts",
@@ -84,9 +86,13 @@
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
+          "options":{
+            "port": 3000
+          },
           "configurations": {
             "production": {
               "browserTarget": "frontend:build:production"
+
             },
             "development": {
               "browserTarget": "frontend:build:development"
@@ -97,6 +103,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
+
             "browserTarget": "frontend:build"
           }
         },

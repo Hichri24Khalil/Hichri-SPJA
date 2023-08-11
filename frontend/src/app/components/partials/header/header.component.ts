@@ -31,7 +31,9 @@ export class HeaderComponent implements OnInit {
   }
 
   get isAuth(){
-    return this.user.token;
+   const token = this.userService.getToken()
+   
+    return token;
   }
 
 }
