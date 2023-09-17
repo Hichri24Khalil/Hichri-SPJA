@@ -24,44 +24,121 @@ router.get("/seed", asyncHandler(
 
  router.post("/login", asyncHandler(
   async (req, res) => {
-    const { email, password } = req.body;
-    const user = await UserModel.findOne({ email });
+    try {
+      const { email, password } = req.body;
+      const user = await UserModel.findOne({ email });
+  
+      if (!user) {
+        res.status(404).json({ message: 'User not found!' });
+      }else{
+  
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (!isPasswordValid) {
+        res.status(401).json({ message: 'Invalid credentials!' });
+      }else{
+  
+      // Create a JWT token
+      const payload = {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+      };
+      const secretKey = '123456';
+      const token = jwt.sign({ userId: payload }, secretKey, { expiresIn: '8h' });
+  
+      res.status(200).json({ message: 'Login successful!', token, data: user });
+    }}} catch (err) {
+      res.status(500).json({ message: 'Login failed!', error: err });
+    }}
+));
+router.delete('/remove/:id', asyncHandler(
+  async (req , res) => {
+    try {
+      const userId = req.params.id;
 
-    if (user && (await bcrypt.compare (password,user.password))) {
-      const token = generateTokenResponse(user);
-     // user.token = token;   
-       // res.send(user);
-       res.send({ user, token }); 
-    
-      } 
-    else {
+      // Find the user by their ID and remove them
+      const removedUser = await UserModel.findByIdAndRemove(userId);
+
+      if (!removedUser) {
+        res.status(404).send({ message: 'User not found' });
+      }else{
+        res.send({ message: 'User removed successfully' });
+      }
+
      
-      res.status(HTTP_BAD_REQUEST).send("Username or password is not valid");
+    } catch (error) {
+      console.error(error);
+      res.status(500).send({ message: 'Internal Server Error' });
     }
   }
 ));
 
+router.put('/edit/:id', asyncHandler(
+  async (req , res) => {
+    try {
+      const userId = req.params.id;
+      const { name, email, password, address } = req.body;
+
+      // Find the user by their ID
+      const user = await UserModel.findById(userId);
+
+      if (!user) {
+        res.status(404).send({ message: 'User not found' });
+      }else{
+        user.name = name;
+      user.email = email.toLowerCase();
+      user.address = address;
+
+      // If a new password is provided, update the password
+      if (password) {
+        const encryptedPassword = await bcrypt.hash(password, 10);
+        user.password = encryptedPassword;
+      }
+
+      // Save the updated user
+      const updatedUser = await user.save();
+
+      res.send(updatedUser);
+      }
+
+      // Update the user properties
+      
+    } catch (error) {
+      console.error(error);
+      res.status(500).send({ message: 'Internal Server Error' });
+    }
+  }
+));
+
+router.get("/", asyncHandler(
+  async (req, res) => {
+    const users = await UserModel.find();
+    res.send(users);
+  }
+))
+
 router.post('/register', asyncHandler(
   async (req, res) => {
-    const {name, email, password, address} = req.body;
-    const user = await UserModel.findOne({email});
-    if(user){
-      res.status(HTTP_BAD_REQUEST)
-      .send('User is already exist, please login!');
-      return;
+    try {
+      const { email, name, phoneNumber, password,isAdmin,address } = req.body;
+  
+      // Check if the user already exists
+      const existingUser = await UserModel.findOne({ email });
+      if (existingUser) {
+        res.status(400).json({ message: 'User already exists!' });
+      }else{
+  
+      // Hash the password
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(password, salt);
+  
+      // Create a new user
+      const user = new UserModel({ email, name, phoneNumber, password: hashedPassword,isAdmin,address });
+      await user.save();
+      res.status(201).json({ message: 'Registration successful!' });}
+    } catch (err) {
+      res.status(500).json({ message: 'Registration failed!', error: err });
     }
-    const encryptedPassword = await bcrypt.hash(password, 10);
-    const newUser:User = {
-      id:'',
-      name,
-      email: email.toLowerCase(),
-      password: encryptedPassword,
-      address,
-      isAdmin: false
-    }
-
-    const dbUser = await UserModel.create(newUser);
-    res.send(generateTokenResponse(dbUser));
   }
 ))
 

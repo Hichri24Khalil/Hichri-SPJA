@@ -6,6 +6,20 @@ import { ProductdModel } from '../models/product.model';
 
 const router =Router();
 
+const multer = require('multer');
+let filename: string;
+const storage = multer.diskStorage({
+  destination:  "./uploads",
+  filename:  (req: any,file: any,redirect: any) =>{
+    let date = Date.now();
+    let f1 = date + "."+ file.mimetype.split('/')[1];
+    redirect(null,f1);
+     filename= f1;
+  }
+});
+
+const upload = multer({ storage: storage });
+
 
 router.get("/seed", asyncHandler(
     async (req, res) => {
@@ -21,6 +35,119 @@ router.get("/seed", asyncHandler(
 
     }
 ));
+
+router.delete('/remove/:id', asyncHandler(
+  async (req , res) => {
+    try {
+      const productId = req.params.id;
+
+      // Find the product by its ID and remove it
+      const removedProduct = await ProductdModel.findByIdAndRemove(productId);
+
+      if (!removedProduct) {
+        res.status(404).send({ message: 'Product not found' });
+      }else{
+        res.send({ message: 'Product removed successfully' });
+      }
+
+      
+    } catch (error) {
+      console.error(error);
+      res.status(500).send({ message: 'Internal Server Error' });
+    }
+  }
+));
+
+
+router.put('/edit/:id', asyncHandler(
+  async (req , res) => {
+    try {
+      const productId = req.params.id;
+      const {
+        name,
+        price,
+        tags,
+        favorite,
+        stars,
+        imageUrl,
+        origins,
+        cookTime,
+      } = req.body;
+
+      // Find the product by its ID
+      const product = await ProductdModel.findById(productId);
+
+      if (!product) {
+        res.status(404).send({ message: 'Product not found' });
+      }else{
+        product.name = name;
+      product.price = price;
+      product.tags = tags;
+      product.favorite = favorite;
+      product.stars = stars;
+      product.imageUrl = imageUrl;
+      product.origins = origins;
+      product.cookTime = cookTime;
+
+      // Save the updated product
+      const updatedProduct = await product.save();
+
+      res.status(200).send(updatedProduct);
+      }
+
+      // Update the product properties
+      
+    } catch (error) {
+      console.error(error);
+      res.status(500).send({ message: 'Internal Server Error' });
+    }
+  }
+));
+
+
+router.post('/create',upload.any('image'), asyncHandler(
+  async (req , res) => {
+  try {
+    const {
+      name,
+      price,
+      tags,
+      favorite,
+      stars,
+      imageUrl,
+      origins,
+      cookTime,
+    } = req.body;
+     
+    const existingProduct = await ProductdModel.findOne({ name });
+    
+    if (existingProduct) {
+      // If a product with the same name exists, send an error response
+      res.status(400).send({ message: 'Product with this name already exists' });
+    }else{
+      
+    const newProduct = new ProductdModel({
+      name,
+      price,
+      tags,
+      favorite,
+      stars,
+      imageUrl,
+      origins,
+      cookTime,
+    });
+    newProduct.imageUrl=filename;
+    
+    filename="";
+
+    const savedProduct = await newProduct.save();
+
+    res.status(200).send(savedProduct);
+  }} catch (error) {
+    console.error(error);
+    res.status(500).send({ message: 'Internal Server Error' });
+  }
+}));
 
 
 
